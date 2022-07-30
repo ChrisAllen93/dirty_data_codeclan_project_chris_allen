@@ -11,7 +11,6 @@ library(janitor)
 library(here)
 library(assertr)
 
-
 ```
 
 ```{r}
@@ -54,13 +53,14 @@ candy_cleaned_2015 <- candy_2015 %>%
          going_out = are_you_going_actually_going_trick_or_treating_yourself) %>% 
   mutate(year = str_extract(timestamp, '[0-9]{1,4}'), .after = timestamp) %>%
   mutate(id = row_number(timestamp) + 1e6) %>% 
+  mutate(gender = NA_character_, .after = age) %>% 
   mutate(country = NA_character_, .after = age) %>% 
   #mutate(is_going_out = ifelse(is_going_out == "Yes",T, F)) %>% 
   select(id, year:york_peppermint_patties, necco_wafers) %>% 
   # replace all non integer age inputs as NA, convert values to integers
   mutate(age = as.integer(age), year = as.integer(year)) %>% 
   pivot_longer(butterfinger:necco_wafers, names_to = "candy_name", values_to = "rating") %>% 
-  select(id, year, going_out, age, country, candy_name, rating)
+  select(id, year, going_out, age, gender, country, candy_name, rating)
 
 
 # maybe pivot_longer for combining three datasets
@@ -79,12 +79,11 @@ candy_cleaned_2016 <- candy_2016 %>%
   mutate(id = row_number(timestamp) + 2e6, .before = timestamp) %>% 
   mutate(year = str_extract(timestamp, '[0-9]{1,4}'), .after = timestamp) %>%
   clean_country_names() %>% 
-  select(id, year:york_peppermint_patties, -gender, -which_state_province_county_do_you_live_in) %>% 
+  select(id, year:york_peppermint_patties, gender, -which_state_province_county_do_you_live_in) %>% 
   # replace all non integer age inputs as NA, convert values to integers
-  mutate(age = as.integer(age), year = as.integer(year)) %>% 
-  #pivot_longer(x100_grand_bar:york_peppermint_patties, names_to = "candy_name", values_to = "rating")
+  mutate(age = as.integer(age), year = as.integer(year)) %>%
   pivot_longer(x100_grand_bar:york_peppermint_patties, names_to = "candy_name", values_to = "rating") %>% 
-  select(id, year, going_out, age, country, candy_name, rating)
+  select(id, year, going_out, age, gender, country, candy_name, rating)
 
 
 candy_cleaned_2016
@@ -95,25 +94,21 @@ candy_cleaned_2016
 
 candy_cleaned_2017 <- candy_2017 %>% 
   rename(id = internal_id) %>% 
- # rename(id = internal_id) %>% 
   pivot_longer(q1_going_out:q11_day, names_to = "col_names", values_to = "value") %>%
   select(id, col_names, value) %>%
   mutate(col_names = str_remove(col_names, "q[0-9]_")) %>%
   pivot_wider(names_from = col_names, values_from = value) %>%
   clean_names() %>%
   mutate(year = as.integer(2017), .after = id) %>%
-  mutate(age = as.integer(age)) %>% 
+  mutate(age = as.integer(age)) %>%
   clean_country_names() %>% 
   pivot_longer(x100_grand_bar:york_peppermint_patties, names_to = "candy_name", values_to = "rating") %>% 
-  select(id, year, going_out, age, country, candy_name, rating)
+  select(id, year, going_out, age, gender, country, candy_name, rating) %>% 
+  filter(!is.na(rating))
 
 candy_cleaned_2017
-```
 
-Summary of countries
-No cleaning = 118 unique countries
-Remove non character values = 
-Lowercase = 96 unique countries
+```
 
 ```{r}
 
@@ -163,38 +158,193 @@ exclude_list <- c("a", "canae", "cascadia", "earth", "fearandloathing",
 
 ```{r}
 
-candy_cleaned_2015 %>% 
+combined_data_long <- candy_cleaned_2015 %>% 
   bind_rows(candy_cleaned_2016) %>% 
   bind_rows(candy_cleaned_2017) %>% 
-  distinct(candy_name) %>% 
-  arrange(candy_name)
+  mutate(candy_name = case_when(
+    candy_name == "bonkers_the_candy" ~ "bonkers",
+    candy_name == "boxo_raisins" ~ "box_o_raisins",
+    candy_name %in% "anonymous_brown_globs_that_come_in_black_and_orange_wrappers" ~ "mary_jane",
+    TRUE ~ candy_name
+    )) %>% 
+  filter(!candy_name %in% not_candy) %>% 
+  mutate(age = if_else((age > 0 & age < 100), age, NA_integer_)) %>% 
+  filter(!is.na(rating))
+
+combined_data_long
+
+combined_data_wide <- combined_data_long %>%
+  pivot_wider(names_from = candy_name, values_from = rating)
+combined_data_wide
 
 ```
+
+
+
+
+
 ```{r}
-candy_cleaned_2015
-candy_cleaned_2016
-candy_cleaned_2017
+
+not_candy <- c("Bonkers (the board game)",
+               "Anonymous brown globs that come in black and orange wrappers\t(a.k.a. Mary Janes)",
+               "Any full-sized candy bar",
+               "Candy that is clearly just the stuff given out for free at restaurants",
+               "Cash, or other forms of legal tender",
+               "Chardonnay",
+               "Chick-o-Sticks (we don’t know what that is)",
+               "Creepy Religious comics/Chick Tracts",
+               "Dental paraphernalia",
+               "Generic Brand Acetaminophen",
+               "Glow sticks",
+               "Gum from baseball cards",
+               "Healthy Fruit",
+               "Hugs (actual physical hugs)",
+               "Jolly Rancher (bad flavor)",
+               "Jolly Ranchers (good flavor)",
+               "JoyJoy (Mit Iodine!)",
+               "Senior Mints",
+               "Kale smoothie",
+               "Minibags of chips",
+               "Real Housewives of Orange County Season 9 Blue-Ray",
+               "Sandwich-sized bags filled with BooBerry Crunch",
+               "Spotted Dick",
+               "Those odd marshmallow circus peanut things",
+               "Vials of pure high fructose corn syrup, for main-lining into your vein",
+               "Vicodin",
+               "White Bread",
+               "Whole Wheat anything",
+               "abstained_from_m_ming",
+               "anonymous_brown_globs_that_come_in_black_and_orange_wrappers",
+               "broken_glow_stick",
+               "dental_paraphenalia",
+               "lapel_pins",
+               "mint_leaves",
+               "person_of_interest_season_3_dvd_box_set_not_including_disc_4_with_hilarious_outtakes",
+               "peterson_brand_sidewalk_chalk") %>%
+  make_clean_names()
+
 ```
 
-
+--------------------------------------------------------------------------------
 
 Analysis questions
 What is the total number of candy ratings given across the three years. (Number of candy ratings, not the number of raters. Don’t count missing values)
 #just a list of all the candy ratings
+
+```{r}
+
+combined_data_long %>%
+  filter(!is.na(rating)) %>% 
+  summarise(total_candy_ratings = n())
+
+```
+
 What was the average age of people who are going out trick or treating?
 # age column
+
+```{r}
+
+combined_data_wide %>% 
+  filter(going_out == "Yes") %>% 
+  summarise(avg_age = mean(age, na.rm = TRUE))
+
+```
+
+
 What was the average age of people who are not going trick or treating?
 # age column
+
+```{r}
+
+combined_data_wide %>% 
+  filter(going_out == "No") %>% 
+  summarise(avg_age = mean(age, na.rm = TRUE))
+
+
+```
+
+
 For each of joy, despair and meh, which candy bar received the most of these ratings?
 # candy ratings
+
+```{r}
+
+combined_data_long %>%
+  group_by(rating, candy_name) %>% 
+  summarise(count = n()) %>% 
+  slice_max(count) 
+
+```
+
+
+
 How many people rated Starburst as despair?
 # starburst column (candy columns)
 
+```{r}
+
+combined_data_long %>% 
+  filter(candy_name == "starburst", rating == "DESPAIR") %>% 
+  summarise(count = n())
+  
+  
+```
+
+
 For the next three questions, count despair as -1, joy as +1, and meh as 0.
 
+
+
 What was the most popular candy bar by this rating system for each gender in the dataset ?
-# candy ratings
+# candy ratings, gender
+
+```{r}
+
+candy_scored <- combined_data_long %>% 
+  mutate(score = case_when(
+    rating == "JOY" ~ 1,
+    rating == "DESPAIR" ~ -1,
+    TRUE ~ 0
+  ))
+
+```
+
+```{r}
+
+candy_scored %>%
+  filter(!is.na(gender)) %>% 
+  group_by(gender, candy_name) %>%
+  summarise(total_score = sum(score)) %>% 
+  slice_max(total_score)
+  
+
+```
+
+
 What was the most popular candy bar in each year?
 # date or year
+
+```{r}
+
+candy_scored %>% 
+  group_by(year, candy_name) %>% 
+  summarise(total_score = sum(score)) %>% 
+  slice_max(total_score)
+
+
+```
+
+
 What was the most popular candy bar by this rating for people in US, Canada, UK, and all other countries?
 # countries
+
+```{r}
+
+candy_scored %>%
+  filter(country == c("USA", "Canada", "UK", "Other")) %>% 
+  group_by(country, candy_name) %>% 
+  summarise(total_score = sum(score)) %>% 
+  slice_max(total_score)
+
+```
+
