@@ -1,0 +1,200 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+
+library(tidyverse)
+library(readxl)
+library(janitor)
+library(here)
+library(assertr)
+
+
+```
+
+```{r}
+
+candy_2015 <- read_xlsx("raw_data/boing-boing-candy-2015.xlsx") %>%
+  clean_names()
+candy_2016 <- read_xlsx("raw_data/boing-boing-candy-2016.xlsx") %>%
+  clean_names()
+candy_2017 <- read_xlsx("raw_data/boing-boing-candy-2017.xlsx") %>%
+  clean_names()
+
+```
+
+```{r}
+
+candy_2015
+candy_2016
+candy_2017
+
+
+```
+
+
+
+
+```{r}
+
+names_2015 <- names(candy_2015)
+names_2016 <- names(candy_2016)
+names_2017 <- names(candy_2017)
+
+```
+
+### Clean 2015 data
+
+```{r}
+
+candy_cleaned_2015 <- candy_2015 %>% 
+  rename(age = how_old_are_you, 
+         going_out = are_you_going_actually_going_trick_or_treating_yourself) %>% 
+  mutate(year = str_extract(timestamp, '[0-9]{1,4}'), .after = timestamp) %>%
+  mutate(id = row_number(timestamp) + 1e6) %>% 
+  mutate(country = NA_character_, .after = age) %>% 
+  #mutate(is_going_out = ifelse(is_going_out == "Yes",T, F)) %>% 
+  select(id, year:york_peppermint_patties, necco_wafers) %>% 
+  # replace all non integer age inputs as NA, convert values to integers
+  mutate(age = as.integer(age), year = as.integer(year)) %>% 
+  pivot_longer(butterfinger:necco_wafers, names_to = "candy_name", values_to = "rating") %>% 
+  select(id, year, going_out, age, country, candy_name, rating)
+
+
+# maybe pivot_longer for combining three datasets
+candy_cleaned_2015
+```
+
+### Clean 2016 data
+
+```{r}
+
+candy_cleaned_2016 <- candy_2016 %>% 
+  rename(going_out = are_you_going_actually_going_trick_or_treating_yourself,
+         age = how_old_are_you,
+         country = which_country_do_you_live_in,
+         gender = your_gender) %>%
+  mutate(id = row_number(timestamp) + 2e6, .before = timestamp) %>% 
+  mutate(year = str_extract(timestamp, '[0-9]{1,4}'), .after = timestamp) %>%
+  clean_country_names() %>% 
+  select(id, year:york_peppermint_patties, -gender, -which_state_province_county_do_you_live_in) %>% 
+  # replace all non integer age inputs as NA, convert values to integers
+  mutate(age = as.integer(age), year = as.integer(year)) %>% 
+  #pivot_longer(x100_grand_bar:york_peppermint_patties, names_to = "candy_name", values_to = "rating")
+  pivot_longer(x100_grand_bar:york_peppermint_patties, names_to = "candy_name", values_to = "rating") %>% 
+  select(id, year, going_out, age, country, candy_name, rating)
+
+
+candy_cleaned_2016
+
+```
+
+```{r}
+
+candy_cleaned_2017 <- candy_2017 %>% 
+  rename(id = internal_id) %>% 
+ # rename(id = internal_id) %>% 
+  pivot_longer(q1_going_out:q11_day, names_to = "col_names", values_to = "value") %>%
+  select(id, col_names, value) %>%
+  mutate(col_names = str_remove(col_names, "q[0-9]_")) %>%
+  pivot_wider(names_from = col_names, values_from = value) %>%
+  clean_names() %>%
+  mutate(year = as.integer(2017), .after = id) %>%
+  mutate(age = as.integer(age)) %>% 
+  clean_country_names() %>% 
+  pivot_longer(x100_grand_bar:york_peppermint_patties, names_to = "candy_name", values_to = "rating") %>% 
+  select(id, year, going_out, age, country, candy_name, rating)
+
+candy_cleaned_2017
+```
+
+Summary of countries
+No cleaning = 118 unique countries
+Remove non character values = 
+Lowercase = 96 unique countries
+
+```{r}
+
+clean_country_names <- function(dataframe){
+  
+us_list <- c("merica", "ahemamerca", "alaska", "america","california","murica",
+             "murrika","newjersey","newyork","northcarolina","pittsburgh",
+             "trumpistan", "unhingedstates", "uniedstates","unitestates",
+             "unitesstates", "uniteds", "us", "theunitedstates",
+             "theunitedstatesofamerica", "unitedsates", "unitedstaes",
+             "ipretendtobefromcanada,butiamreallyfromtheunitedstates",
+             "unitedstate", "unitedstatea", "unitedstated", "usofa", "ussa",
+             "ud", "USA", "sub-canadiannorthamericamerica",
+             "theyooessofaaayyyyyy", "unitsstates")
+
+uk_list <- c("endland", "england", "scotland", "uk", "unitedkingdom",
+             "unitedkindom")
+
+canada_list <- c("can", "canada")
+
+exclude_list <- c("a", "canae", "cascadia", "earth", "fearandloathing",
+                  "idontknowanymore", "insanitylately", "namerica", "narnia",
+                  "sovietcanuckistan", "subscribetodmuzonyoutube", "denial",
+                  "godscountry", "neverland", "oneofthebestones", "seeabove",
+                  "somewhere", "eua", "thereisntoneforoldmen",
+                  "therepublicofcascadia", "thisone")
+  
+  dataframe %>%
+    mutate(country = str_remove_all(country, "[0-9]*"),
+         country = str_to_lower(country),
+         country = str_remove_all(country, "[`.' !?0-9]"),
+         country = if_else(str_detect(country, "uniteds"),"USA", country),
+         country = if_else(str_detect(country, "usa"),"USA", country)) %>% 
+    mutate(country = case_when(
+      country %in% us_list ~ "USA",
+      country %in% uk_list ~ "UK",
+      country %in% canada_list ~ "Canada",
+      country %in% exclude_list ~ NA_character_,
+      !is.na(country) & country != "" ~ "Other"
+      ), .after = country)
+}
+
+
+```
+
+# Bind tables together
+
+```{r}
+
+candy_cleaned_2015 %>% 
+  bind_rows(candy_cleaned_2016) %>% 
+  bind_rows(candy_cleaned_2017) %>% 
+  distinct(candy_name) %>% 
+  arrange(candy_name)
+
+```
+```{r}
+candy_cleaned_2015
+candy_cleaned_2016
+candy_cleaned_2017
+```
+
+
+
+Analysis questions
+What is the total number of candy ratings given across the three years. (Number of candy ratings, not the number of raters. Don’t count missing values)
+#just a list of all the candy ratings
+What was the average age of people who are going out trick or treating?
+# age column
+What was the average age of people who are not going trick or treating?
+# age column
+For each of joy, despair and meh, which candy bar received the most of these ratings?
+# candy ratings
+How many people rated Starburst as despair?
+# starburst column (candy columns)
+
+For the next three questions, count despair as -1, joy as +1, and meh as 0.
+
+What was the most popular candy bar by this rating system for each gender in the dataset ?
+# candy ratings
+What was the most popular candy bar in each year?
+# date or year
+What was the most popular candy bar by this rating for people in US, Canada, UK, and all other countries?
+# countries

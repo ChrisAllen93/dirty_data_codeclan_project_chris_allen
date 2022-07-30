@@ -1,0 +1,81 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+# Load in libraries
+library(tidyverse)
+library(here)
+
+```
+
+
+
+```{r}
+# Read in data
+decathlon <- read_csv(here("clean_data/clean_data.csv"))
+
+decathlon
+
+```
+
+
+
+Who had the longest long jump seen in the data?
+
+```{r}
+
+decathlon %>%
+  select(athlete_name, long_jump) %>% 
+  filter(long_jump == max(long_jump))
+
+```
+
+
+What was the average 100m time in each competition?
+```{r}
+
+decathlon %>%
+  group_by(competition) %>% 
+  summarise(avg_100m = mean(x100m))
+
+```
+
+
+Who had the highest total points across both competitions?
+```{r}
+
+decathlon %>% 
+  group_by(athlete_name) %>% 
+  summarise(total_points = sum(points)) %>% 
+  slice_max(total_points, with_ties = FALSE)
+
+```
+
+What was the shot-put scores for the top three competitors in each competition?
+```{r}
+
+decathlon %>% 
+  filter(rank <= 3) %>% 
+  select(athlete_name, shot_put, rank, competition) %>% 
+  arrange(competition, rank)
+
+```
+
+What was the average points for competitors who ran the 400m in less than 50
+seconds vs. those than ran 400m in more than 50 seconds?
+
+```{r}
+decathlon %>% 
+  # create new column to categorise times above and below 50s
+  mutate(x400m_time_class = if_else(x400m < 50, "Less than 50s",
+                                    "More than 50s")) %>% 
+  # group by new column
+  group_by(x400m_time_class) %>%
+  # calculate mean for each group of times
+  summarise(avg_points_400m = round(mean(points), 0)) %>% 
+  # sort order of results
+  arrange(desc(avg_points_400m))
+
+```

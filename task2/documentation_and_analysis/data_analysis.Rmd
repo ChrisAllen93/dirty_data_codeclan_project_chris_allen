@@ -1,0 +1,86 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+library(tidyverse)
+library(here)
+
+```
+
+
+
+```{r}
+
+cake <- read_csv(here("clean_data/clean_data.csv"))
+cake
+```
+
+
+
+Which cake has the most cocoa in it?
+```{r}
+
+cake %>% 
+  filter(ingredient == "Cocoa") %>% 
+  slice_max(value)
+
+```
+
+For sponge cake, how many cups of ingredients are used in total?
+
+```{r}
+
+cake %>% 
+  filter(cake == "Sponge", measure == "cup") %>% 
+  summarise(num_cups = sum(value))
+
+```
+
+How many ingredients are measured in teaspoons?
+
+```{r}
+
+ingredient_codes %>% 
+  filter(measure == "teaspoon") %>% 
+  summarise(num_teaspoon_ingredients = n())
+
+```
+
+Which cake has the most unique ingredients?
+
+```{r}
+
+# identify the ingredients which are only used once
+unique_ingredients <- cake %>% 
+  group_by(ingredient) %>% 
+  summarise(count_of_ingredient = n()) %>% 
+  filter(count_of_ingredient < 2) %>% 
+  select(ingredient) %>% 
+  pull()
+
+unique_ingredients
+
+# determine unique score based on number of ingredients matching with the
+# unique list
+cake %>% 
+  mutate(has_unique_ingredient= ifelse(ingredient %in% unique_ingredients,
+                                       T, F)) %>% 
+  group_by(cake) %>%
+  summarise(uniqueness_score = sum(has_unique_ingredient)) %>% 
+  slice_max(uniqueness_score)
+
+```
+
+Which ingredients are used only once?
+
+```{r}
+
+cake %>% 
+  group_by(ingredient) %>% 
+  summarise(count_of_ingredient = n()) %>% 
+  filter(count_of_ingredient == 1)
+
+```
+
