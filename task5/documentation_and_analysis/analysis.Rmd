@@ -1,0 +1,173 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+
+library(tidyverse)
+library(here)
+
+```
+
+
+```{r}
+
+rwa <- read_csv(here("raw_data/rwa.csv"))
+
+rwa
+
+You’ll need to calculate people’s overall RWA score. This is found from the mean
+of questions 3 to 22. Questions 1 and 2 are warm up questions. Note that the 
+following questions are reverse scored: 4, 6, 8, 9, 11, 13, 15, 18, 20, 21.
+
+Read the file rwa_codebook.txt to understand how to clean this data. [Hint: you
+may want to recode some of the variables to give their values meaning].
+
+```{r}
+
+rwa_recoded <- rwa %>% 
+  mutate(id = row_number(),
+         gender = case_when(
+           gender == 1 ~ "Male",
+           gender == 2 ~ "Female",
+           gender == 3 ~ "Other"
+           ),
+         hand = case_when(
+           hand == 1 ~ "Right",
+           hand == 2 ~ "Left",
+           hand == 3 ~ "Both"
+           ),
+         urban = case_when(
+           urban == 1 ~ "Rural",
+           urban == 2 ~ "Suburban",
+           urban == 3 ~ "Urban"
+         ),
+         education = case_when(
+           education == 1 ~ "Less than high school",
+           education == 2 ~ "High School",
+           education == 3 ~ "University degree",
+           education == 4 ~ "Graducate degree"
+           )
+         )
+
+
+```
+
+
+
+```{r}
+source(here("data_cleaning_scripts/cleaning_functions.R"))
+
+scores_to_flip <- c("Q4", "Q6", "Q8", "Q9", "Q11", "Q13", "Q15", "Q18", "Q20",
+                     "Q21")
+
+rwa_score <- rwa_recoded %>%
+  filter(surveyaccurate == 1) %>% 
+  select(id, starts_with(c("Q", "E")), education, urban, gender, age, hand,
+         familysize) %>%
+  flip_q_score(scores_to_flip) %>%
+  pivot_longer(Q1:E22, names_to = "category", values_to = "value") %>% 
+  separate(category, c("category", "question_no"), sep = 1) %>% 
+  pivot_wider(names_from = category, values_from = value) %>% 
+  rename(score = Q, elapsed_time = E) %>% 
+  select(id, question_no, score, elapsed_time, everything()) %>% 
+  filter(question_no >= 3) %>% 
+  group_by(id) %>% 
+  summarise(rwa_score = mean(score), test_time = sum(elapsed_time))
+
+# join rwa_score to 
+rwa_combined <- rwa_score %>% 
+  inner_join(rwa_recoded, by = "id") %>% 
+  select(id, rwa_score, test_time, gender, hand, familysize, urban, education, age)
+
+```
+
+You’ll need to calculate people’s overall RWA score. This is found from the mean
+of questions 3 to 22. Questions 1 and 2 are warm up questions. Note that the 
+following questions are reverse scored: 4, 6, 8, 9, 11, 13, 15, 18, 20, 21.
+
+
+
+2.1.2 Analysis questions
+What’s the average RWA score for each gender?
+# Gender (gender) and RWA_score
+
+```{r}
+rwa_combined %>% 
+  filter(!is.na(gender)) %>% 
+  group_by(gender) %>% 
+  summarise(avg_rwa_score = mean(rwa_score), n())
+
+```
+
+
+What’s the average RWA score for left handed people vs. right handed people.
+# Handedness (hand) and RWA_score 
+
+```{r}
+
+rwa_combined %>% 
+  filter(hand == "Right" | hand == "Left") %>% 
+  group_by(hand) %>% 
+  summarise(avg_rwa_score = mean(rwa_score))
+
+
+```
+
+
+
+What’s the average family size for each type of childhood?
+# Family_size (family_size) and type of childhood 
+
+
+```{r}
+
+rwa_combined %>% 
+  filter(!is.na(urban)) %>% 
+  group_by(urban) %>% 
+  summarise(avg_family_size = mean(familysize), n())
+
+
+```
+
+What’s the average time to take the test for each education level?
+# test time (testelapse) and education level (education)
+  - check if sum of elapsed time is equal to testelapse?
+
+```{r}
+rwa_combined %>% 
+  group_by(education) %>% 
+  summarise(avg_test_time = mean(test_time), n())
+
+
+```
+
+
+
+Create a plot of results of question 4.
+What’s the average RWA score for people aged
+Under 18
+18 to 25
+26 to 40
+41 to 60
+Over 60
+
+```{r}
+
+rwa_combined %>% 
+  mutate(age_range = case_when(
+    age < 18 ~ "Under 18",
+    age <= 25 ~ "18 - 25",
+    age <= 40 ~ "26 - 40",
+    age <= 60 ~ "40 - 60",
+    age > 60 ~ "Over 60"
+  )) %>% 
+  group_by(age_range) %>% 
+  summarise(avg_rwa_score = mean(rwa_score)) %>% 
+  arrange(desc(avg_rwa_score))
+
+
+```
+
+

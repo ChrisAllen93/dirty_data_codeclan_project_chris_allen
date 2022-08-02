@@ -42,7 +42,7 @@ How many ingredients are measured in teaspoons?
 
 ```{r}
 
-ingredient_codes %>% 
+cake %>% 
   filter(measure == "teaspoon") %>% 
   summarise(num_teaspoon_ingredients = n())
 

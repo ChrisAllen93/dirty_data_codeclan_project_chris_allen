@@ -25,64 +25,59 @@ candy_2017 <- read_xlsx("raw_data/boing-boing-candy-2017.xlsx") %>%
 # Clean 2015 data ---------------------------------------------------------
 
 candy_2015_clean <- candy_2015 %>% 
+  # renaming non-standard column headings
   rename(age = how_old_are_you, 
-         going_out = are_you_going_actually_going_trick_or_treating_yourself) %>% 
-  mutate(year = str_extract(timestamp, '[0-9]{1,4}'), .after = timestamp) %>%
-  mutate(id = row_number(timestamp) + 1e6) %>% 
-  mutate(gender = NA_character_, .after = age) %>% 
-  mutate(country = NA_character_, .after = age) %>% 
-  select(id, year:york_peppermint_patties, necco_wafers) %>% 
-  # replace all non integer age inputs as NA, convert values to integers
-  mutate(age = as.integer(age), year = as.integer(year)) %>% 
-  pivot_longer(butterfinger:necco_wafers, names_to = "candy_name",
-               values_to = "rating") %>%
-  clean_candy_names() %>% 
-  select(id, year, going_out, age, gender, country, candy_name, rating)
-
+         going_out =
+           are_you_going_actually_going_trick_or_treating_yourself) %>%
+  # creating standard column headings
+  mutate(year = as.integer(str_extract(timestamp, '[0-9]{1,4}')),
+         id = row_number(timestamp) + 1e6,
+         gender = NA_character_,
+         country = NA_character_,
+         age = as.integer(age)) %>%
+  # reorder columns and pivot candy names and ratings
+  select(id, year, going_out, age, gender, country, where(is.character)) %>%
+  pivot_longer(-(id:country), names_to = "candy_name", values_to = "rating") %>%
+  clean_candy_names() %>%
+  clean_country_names()
 
 # Clean 2016 data ---------------------------------------------------------
 
-candy_2016_clean <- candy_2016 %>% 
+candy_2016_clean <- candy_2016 %>%
+  # renaming non-standard column headings
   rename(going_out = are_you_going_actually_going_trick_or_treating_yourself,
          age = how_old_are_you,
          country = which_country_do_you_live_in,
          gender = your_gender) %>%
-  mutate(id = row_number(timestamp) + 2e6, .before = timestamp) %>% 
-  mutate(year = str_extract(timestamp, '[0-9]{1,4}'), .after = timestamp) %>%
-  clean_country_names() %>% 
-  select(id, year:york_peppermint_patties, gender, 
-         -which_state_province_county_do_you_live_in) %>% 
-  # replace all non integer age inputs as NA, convert values to integers
-  mutate(age = as.integer(age), year = as.integer(year)) %>%
-  pivot_longer(x100_grand_bar:york_peppermint_patties, names_to = "candy_name",
-               values_to = "rating") %>%
-  clean_candy_names() %>% 
-  select(id, year, going_out, age, gender, country, candy_name, rating)
-
+  # creating standard column headings
+  mutate(id = row_number(timestamp) + 2e6,
+         year = as.integer(str_extract(timestamp, '[0-9]{1,4}')),
+         age = as.integer(age)) %>%
+  # reorder columns and pivot candy names and ratings
+  select(id, year, going_out, age, gender, country, where(is.character)) %>%
+  pivot_longer(-(id:country), names_to = "candy_name", values_to = "rating") %>%
+  clean_candy_names() %>%
+  clean_country_names()
 
 # Clean 2017 data ---------------------------------------------------------
 
 candy_2017_clean <- candy_2017 %>% 
-  rename(id = internal_id) %>% 
-  pivot_longer(q1_going_out:q11_day, names_to = "col_names",
-               values_to = "value") %>%
-  select(id, col_names, value) %>%
-  mutate(col_names = str_remove(col_names, "q[0-9]_")) %>%
-  pivot_wider(names_from = col_names, values_from = value) %>%
-  clean_names() %>%
-  mutate(year = as.integer(2017), .after = id) %>%
-  mutate(age = as.integer(age)) %>%
-  clean_country_names() %>% 
-  pivot_longer(x100_grand_bar:york_peppermint_patties, names_to = "candy_name",
-               values_to = "rating") %>% 
-  clean_candy_names () %>% 
-  select(id, year, going_out, age, gender, country, candy_name, rating)
-  
+  # renaming non-standard column headings
+  rename(id = internal_id) %>%
+  rename_with(.fn = ~ gsub("q[0-9]+_","",.x)) %>% 
+  # creating standard column headings
+  mutate(year = as.integer(2017),
+         age = as.integer(age)) %>% 
+  # reorder columns and pivot candy names and ratings
+  select(id, year, going_out, age, gender, country, where(is.character)) %>%
+  pivot_longer(-(id:country), names_to = "candy_name", values_to = "rating") %>% 
+  clean_candy_names() %>%
+  clean_country_names()
 
-# Combine datasets --------------------------------------------------------
+# Combine data sets -------------------------------------------------------
 
 candy_2015_clean %>% 
   bind_rows(candy_2016_clean) %>% 
   bind_rows(candy_2017_clean) %>% 
-  mutate(age = if_else((age > 0 & age < 100), age, NA_integer_)) %>% 
+  mutate(age = if_else((age > 0 & age < 100), age, NA_integer_)) %>%
   write_csv("clean_data/candy_cleaned")
