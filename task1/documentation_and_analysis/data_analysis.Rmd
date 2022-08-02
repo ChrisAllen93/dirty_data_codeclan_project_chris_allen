@@ -20,9 +20,7 @@ decathlon
 
 ```
 
-
-
-Who had the longest long jump seen in the data?
+# Who had the longest long jump seen in the data?
 
 ```{r}
 
@@ -31,19 +29,23 @@ decathlon %>%
   filter(long_jump == max(long_jump))
 
 ```
+The longest long jump distance in the data set was 7.96m by the athlete named
+Clay.
 
+# What was the average 100m time in each competition?
 
-What was the average 100m time in each competition?
 ```{r}
 
 decathlon %>%
   group_by(competition) %>% 
-  summarise(avg_100m = mean(x100m))
+  summarise(avg_100m = round(mean(x100m), 2))
 
 ```
+The average 100m time was 11.18 seconds in the Decastar competition and 10.92 
+seconds for the OlympicG competition.
 
+# Who had the highest total points across both competitions?
 
-Who had the highest total points across both competitions?
 ```{r}
 
 decathlon %>% 
@@ -52,8 +54,13 @@ decathlon %>%
   slice_max(total_points, with_ties = FALSE)
 
 ```
+Whilst not all athletes competed in both competitions the athlete with the 
+highest points across both competitions was Sebrle, with 17,110 points.
 
-What was the shot-put scores for the top three competitors in each competition?
+
+# What was the shot-put scores for the top three competitors in each 
+# competition?
+
 ```{r}
 
 decathlon %>% 
@@ -63,8 +70,13 @@ decathlon %>%
 
 ```
 
-What was the average points for competitors who ran the 400m in less than 50
-seconds vs. those than ran 400m in more than 50 seconds?
+The top three shotput scores for both competitions are shown above. In both 
+competitions Sebrle, Clay and Karpov each bagged the top 3 spots in that order,
+however each athlete achieved a higher score in the OlympicG competition 
+compared to the Decastar competition.
+
+# What was the average points for competitors who ran the 400m in less than 50
+# seconds vs. those than ran 400m in more than 50 seconds?
 
 ```{r}
 decathlon %>% 
@@ -79,3 +91,6 @@ decathlon %>%
   arrange(desc(avg_points_400m))
 
 ```
+The average points per athlete for competitors who ran the 400m in less than 50
+seconds was 8,120 whereas athletes who ran the 400m in greater than 50 seconds
+averaged a total points of 7,727.
