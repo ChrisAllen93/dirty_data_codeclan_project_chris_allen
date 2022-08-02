@@ -1,0 +1,54 @@
+---
+title: "Task 3 - Sea Bird Observations"
+output: github_document
+---
+
+# Overview
+
+This project is designed to clean, manipulate and analyse data related to bird
+observations.
+
+The project is structured such that the raw data is processed via a data
+cleaning and wrangling script before being analysed to answer a number of set of
+questions within an analysis file.
+
+# Packages
+
+The following packages have been used in this project:  
+- tidyverse:
+  Reading in raw data, data wrangling functions and use of the pipe operator 
+  (%>%)  
+- here:
+  Relative file references for reproducibility from other users  
+- janitor:
+  Cleaning column names
+
+# Data Cleaning
+
+The raw data set is processed via a data cleaning script which prepares the data
+for analysis. The raw data set consists of data from two separate sheets within 
+the "seabirds.xls" dataset. The sheets used in this script are:
+
+1. "Ship data by record ID"
+2. "Bird data by record ID"
+
+The script ("clean_data.R") reads in the raw data ("seabirds.xls"), cleans / 
+renames column names joins the two datasheets and cleans the bird names data.
+
+The script outputs the cleaned data set as a .csv file into the clean_data
+folder, ready for analysis.
+
+# Data Analysis
+
+The cleaned data is read into the analysis file ("data_analysis.Rmd") and
+analysis is undertaken, using mostly dplyr functions, to answer the following
+questions:
+
+1. Which bird had the most individual sightings?  
+2. Which bird had the highest total count?  
+3. Which bird had the highest total count above a latitude of -30?  
+4. How many different types of birds were only ever seen in groups of 1?  
+5. How many penguins were seen? (Hint: there are many types of penguin)
+
+The outputs of these questions are located in the analysis file along with
+commentary on any assumptions made to arrive at the answer.

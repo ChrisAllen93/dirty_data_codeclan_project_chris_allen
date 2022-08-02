@@ -4,6 +4,7 @@ output: html_notebook
 ---
 
 ```{r}
+# load in libraries
 library(tidyverse)
 library(here)
 
@@ -12,14 +13,15 @@ library(here)
 
 
 ```{r}
-
+# read in cleaned dataset
 cake <- read_csv(here("clean_data/clean_data.csv"))
 cake
+
 ```
 
 
+# Which cake has the most cocoa in it?
 
-Which cake has the most cocoa in it?
 ```{r}
 
 cake %>% 
@@ -27,40 +29,55 @@ cake %>%
   slice_max(value)
 
 ```
+The cake with the most cocoa in it is the "One Bowl Chocolate" cake with 10 
+tablespoons of cocoa.
 
-For sponge cake, how many cups of ingredients are used in total?
+# For sponge cake, how many cups of ingredients are used in total?
 
 ```{r}
 
 cake %>% 
+  group_by(cake) %>% 
   filter(cake == "Sponge", measure == "cup") %>% 
   summarise(num_cups = sum(value))
 
 ```
+The sponge cake uses a total total of 3.5 cups of ingredients.
 
-How many ingredients are measured in teaspoons?
+
+# How many ingredients are measured in teaspoons?
+
+**It has been assumed that the question is asking for the number of distinct 
+ingredients used within the cake ingredients dataset that are measured using
+teaspoons**
 
 ```{r}
 
 cake %>% 
+  distinct(ingredient, measure) %>%
   filter(measure == "teaspoon") %>% 
   summarise(num_teaspoon_ingredients = n())
 
 ```
+The number of distinct ingredients within the cake list which use teaspoon as 
+the unit of measurement is 8.
 
-Which cake has the most unique ingredients?
+# Which cake has the most unique ingredients?
+
+**For the purpose of this question, a 'unique' ingredient has been defined as an 
+ingredient which is only used once across all of the cake ingredients. The 'most
+unique' cake has been defined as the cake which has the highest number of
+'unique' ingredients.**
 
 ```{r}
 
-# identify the ingredients which are only used once
+# identify the ingredients which are only used once and save these in a list
 unique_ingredients <- cake %>% 
   group_by(ingredient) %>% 
   summarise(count_of_ingredient = n()) %>% 
-  filter(count_of_ingredient < 2) %>% 
+  filter(count_of_ingredient == 1) %>% 
   select(ingredient) %>% 
   pull()
-
-unique_ingredients
 
 # determine unique score based on number of ingredients matching with the
 # unique list
@@ -72,8 +89,9 @@ cake %>%
   slice_max(uniqueness_score)
 
 ```
+The most unique cake is the Angel cake which has 2 unique ingredients in it.
 
-Which ingredients are used only once?
+# Which ingredients are used only once?
 
 ```{r}
 
@@ -83,4 +101,5 @@ cake %>%
   filter(count_of_ingredient == 1)
 
 ```
-
+The list above shows that there are 8 ingredients which are only used once
+across the entire cake ingredient data set.

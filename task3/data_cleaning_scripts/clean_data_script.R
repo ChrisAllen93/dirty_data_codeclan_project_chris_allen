@@ -20,6 +20,9 @@ bird_data <- read_xls("raw_data/seabirds.xls",
          scientific_name = species_scientific_name_taxon_age_sex_plumage_phase,
          abbreviation = species_abbreviation)
 
+
+# Clean data --------------------------------------------------------------
+
 # join bird and ship data tables, select columns of interest and remove NAs
 ship_data %>% 
   left_join(bird_data, by = "record_id") %>% 

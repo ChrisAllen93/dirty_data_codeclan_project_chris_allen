@@ -1,5 +1,5 @@
 ---
-title: "Task 1 - Decathlon"
+title: "Task 1 - Decathlon Data"
 output: github_document
 ---
 
@@ -21,7 +21,7 @@ The following packages have been used in this project:
 - here:
   Relative file references for reproducibility from other users  
 - janitor:
-  Cleaning column names of meteorite data set  
+  Cleaning column names 
 
 # Data Cleaning
 
