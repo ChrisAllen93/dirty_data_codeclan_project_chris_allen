@@ -28,7 +28,7 @@ clean_country_names <- function(dataframe) {
                     "Not the USA or Canada",
                     "atropicalislandsouthoftheequator")
   
-  list_of_countries %>%
+  dataframe %>%
     # removal of number, punctuation/spaces and converting to lowercase
     mutate(country = str_remove_all(country, "[0-9]*"),
            country = str_to_lower(country),
@@ -53,8 +53,8 @@ clean_country_names <- function(dataframe) {
 
 clean_candy_names <- function(dataframe) {
 
-  candy_list <- c("butterfinger",
-                  "mary_jane",
+  candy_list <- c("anonymous_brown_globs_that_come_in_black_and_orange_wrappers",
+                  "butterfinger",
                   "brach_products_not_including_candy_corn",
                   "bubble_gum",
                   "cadbury_creme_eggs",
@@ -102,7 +102,7 @@ clean_candy_names <- function(dataframe) {
                   "nestle_crunch",
                   "nown_laters",
                   "pencils",
-                  "tolberone_something_or_other",
+                  "toblerone",
                   "runts",
                   "mint_kisses",
                   "mint_juleps",
@@ -145,12 +145,12 @@ dataframe %>%
   mutate(candy_name = case_when(
     candy_name == "bonkers_the_candy" ~ "bonkers",
     candy_name == "boxo_raisins" ~ "box_o_raisins",
-    candy_name %in% 
-      "anonymous_brown_globs_that_come_in_black_and_orange_wrappers"
-    ~ "mary_jane",
+    candy_name == "tolberone_something_or_other" ~ "toblerone",
+    candy_name %in%
+      "anonymous_brown_globs_that_come_in_black_and_orange_wrappers_a_k_a_mary_janes"
+    ~ "mary_janes",
     TRUE ~ candy_name
   )) %>% 
     filter(!is.na(rating),
            candy_name %in% candy_list)
-
 }

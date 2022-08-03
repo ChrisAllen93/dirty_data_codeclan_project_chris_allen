@@ -1,0 +1,56 @@
+---
+title: "Task 5 - Right Wing Authoritarianism"
+output: github_document
+---
+
+# Overview
+
+This project is designed to clean, manipulate and analyse data related to survey
+question results from online personality tests about Right Wing 
+Authoritatrianism.
+
+The project is structured such that the raw data is processed via a data
+cleaning and wrangling script before being analysed to answer a number of set of
+questions within an analysis file.
+
+# Packages
+
+The following packages have been used in this project:  
+- tidyverse:
+  Reading in raw data, data wrangling functions and use of the pipe operator 
+  (%>%)  
+- here:
+  Relative file references for reproducibility from other users  
+- janitor:
+  Cleaning column names
+
+# Data Cleaning
+
+The raw data set is process via a data cleaning script ("clean_data.R") which 
+prepares the data for analysis. The script takes the raw data, recodes a number
+of columns (relevant to answering the analysis questions) and calculates the RWA
+score for each respondent.
+
+The script outputs the cleaned data set as a .csv file into the clean_data
+folder, ready for analysis.
+
+# Data Analysis
+
+The cleaned data is read into the analysis file ("data_analysis.Rmd") and
+analysis is undertaken, using mostly dplyr functions, to answer the following
+questions:
+
+1. What’s the average RWA score for each gender?
+2. What’s the average RWA score for left handed people vs. right handed people.
+3. What’s the average family size for each type of childhood?
+4. What’s the average time to take the test for each education level?
+5. Create a plot of results of question 4.
+6. What’s the average RWA score for people aged
+    * Under 18 
+    * 18 to 25 
+    * 26 to 40 
+    * 41 to 60 
+    * Over 60
+
+The outputs of these questions are located in the analysis file along with
+commentary on any assumptions made to arrive at the answer.

@@ -1,116 +1,96 @@
 ---
-title: "R Notebook"
+title: "Task 6 - Data analysis"
 output: html_notebook
 ---
 
 ```{r}
-
+# load in libraries
 library(tidyverse)
-library(janitor)
 library(here)
 
 ```
 
 ```{r}
+# read in cleaned data set
+dog_survey <- read_csv(here("clean_data/clean_data.csv"))
 
-dog_survey <- read_csv(here("raw_data/dog_survey.csv")) %>% clean_names()
+dog_survey
 
 ```
+
+--------------------------------------------------------------------------------
+## Analysis Questions
+
+
+# The client only counts a valid email address as one ending in ‘.com’. How many survey results have a valid email address?
 
 ```{r}
 
 dog_survey %>% 
-  distinct()
-
-```
-### Cleaning script
-
-```{r}
-
-dogs <- dog_survey %>%
-  select(-(x10:x11)) %>%
-  distinct() %>% 
-  mutate(dog_gender = recode(dog_gender, "1 male and 1 female" = "m,f"),
-         dog_age = recode(dog_age, "5 and 4" = "5,4")) %>% 
-  mutate(dog_size = str_split(dog_size, ","),
-         dog_gender = str_split(dog_gender, ","),
-         dog_age = str_split(dog_age, ",")) %>%
-  unnest(cols = c(dog_size, dog_gender, dog_age)) %>% 
-  mutate(dog_gender = str_to_lower(dog_gender)) %>%
-  mutate(dog_gender = case_when(
-    dog_gender %in% c("male", "m")  ~ "M",
-    dog_gender %in% c("female","f", "femlae")  ~ "F"
-  )) %>% 
-  mutate(dog_age = str_extract(dog_age, "[0-9]+"),
-         dog_age = as.numeric(dog_age)) %>% 
-  mutate(dog_size = case_when(
-    dog_size %in% c("XS", "S", "Smallish")  ~ "S",
-    dog_size %in% c("M", "Medium sized")  ~ "M",
-    dog_size %in% c("XL", "L", "large")  ~ "L"
-  )) %>% 
-  mutate(amount_spent_on_dog_food = str_extract(amount_spent_on_dog_food,
-                                                "£[0-9]+.[0-9]+"),# good enough
-         amount_spent_on_dog_food = str_remove(amount_spent_on_dog_food, "£"),
-         amount_spent_on_dog_food = as.numeric(amount_spent_on_dog_food)) 
-
-```
-
-The client only counts a valid email address as one ending in ‘.com’. How many
-survey results have a valid email address?
-
-```{r}
-
-dogs %>% 
   mutate(email_dot_com = str_detect(email, "[.][com]{3}$")) %>%
   filter(email_dot_com == T) %>% 
   distinct(id) %>% 
   summarise(dot_com_emails = n())
 
-
 ```
+There are 181 email addresses ending with ".com".
 
-What’s the average amount spent on dog food for each dog size?
+
+# What’s the average amount spent on dog food for each dog size?
+
+[Assumption] Dog sizes have been categorised into Small, Medium and Large in the
+cleaning script. In the case of an owner having multiple dogs it has been
+assumed that the cost of dog food is split evenly between each dog.
 
 ```{r}
 
-dogs %>% 
-  group_by(id) %>% 
-  mutate(count_of_dogs = n()) %>% 
-  filter(count_of_dogs == 1) %>% 
-  ungroup() %>% 
+dog_survey %>% 
+  filter(!is.na(dog_size)) %>% 
   group_by(dog_size) %>% 
-  summarise(spent_on_food = mean(amount_spent_on_dog_food, na.rm = T), n())
+  summarise(spent_on_food = round(mean(amount_spent_on_dog_food, 
+                                       na.rm = T), 2)) %>% 
+  arrange(desc(spent_on_food))
 
 ```
+On average £52.03 is spent on food for small dogs, the highest of the
+categories, followed by £50.93 for large dogs and £47.26 for medium-sized dogs.
 
 
-
-For owners whose surname starts with a letter in the second half of the alphabet
-(N onwards) what is the average age of their dog?
+# For owners whose surname starts with a letter in the second half of the alphabet (N onwards) what is the average age of their dog?
 
 ```{r}
-dogs %>% 
+dog_survey %>% 
   filter(str_detect(last_name, "^[N-Z]")) %>% 
-  summarise(avg_age_of_dog = mean(dog_age, na.rm = T))
+  summarise(avg_age_of_dog = round(mean(dog_age, na.rm = T),1))
 
 
 ```
+The average age of dogs with owner's surname in the second half of the alphabet
+is 52.9 years.
 
-
-The dog_age column is the age in dog years. If the conversion is 1 human year =
-6 dog years, then what is the average human age for dogs of each gender?
+# The dog_age column is the age in dog years. If the conversion is 1 human year = 6 dog years, then what is the average human age for dogs of each gender?
 
 ```{r}
-dogs %>% 
+dog_survey %>% 
   mutate(human_years = dog_age / 6) %>% 
   group_by(dog_gender) %>% 
-  summarise(avg_human_years = mean(human_years, na.rm = T)) %>%
+  summarise(avg_human_years = round(mean(human_years, na.rm = T), 1)) %>%
   filter(!is.na(dog_gender))
 
+```
+The average age of male dogs is 8.3 years and for females is 7.8 years
+
+# Create a plot of results of question 4.
+
+```{r}
+dog_survey %>%
+  mutate(human_years = dog_age / 6) %>% 
+  group_by(dog_gender) %>% 
+  summarise(avg_human_years = round(mean(human_years, na.rm = T), 2)) %>%
+  filter(!is.na(dog_gender)) %>% 
+  ggplot(aes(x = dog_gender, y = avg_human_years)) +
+  geom_bar(stat="identity",
+           width = 0.5) +
+  labs(x = "Gender", y = "Average Dog Age (years)")
 
 ```
-
-
-
-
-Create a plot of results of question 4.

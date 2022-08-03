@@ -1,16 +1,18 @@
 ---
-title: "R Notebook"
+title: "Task 4 - Data analysis"
 output: html_notebook
 ---
+
+# Load in libraries
 
 ```{r}
 
 library(tidyverse)
-library(readxl)
-library(janitor)
 library(here)
 
 ```
+
+# Read in cleaned dataset
 
 ```{r}
 
@@ -22,9 +24,9 @@ candy
 
 --------------------------------------------------------------------------------
 
-Analysis questions
-What is the total number of candy ratings given across the three years.
-(Number of candy ratings, not the number of raters. Don’t count missing values)
+## Analysis questions
+
+# What is the total number of candy ratings given across the three years. (Number of candy ratings, not the number of raters. Don’t count missing values)
 
 ```{r}
 
@@ -36,20 +38,24 @@ candy %>%
 
 ```
 
-What was the average age of people who are going out trick or treating?
+# What was the average age of people who are going out trick or treating?
 
 ```{r}
 
 candy %>% 
   filter(going_out == "Yes") %>%
+  # group by id - there are multiple rows per id since data is in 'long' format
   group_by(id) %>%
+  # avg age per id is just the age of the survey respondent
   summarise(avg_age = mean(age)) %>% 
-  summarise(avg_age_pop = mean(avg_age, na.rm = T))
+  # average age across every survey respondent
+  summarise(avg_age_pop = round(mean(avg_age, na.rm = T), 1))
 
 ```
+The average age of the survey respondent who is going out trick or treating is
+34.9 (to 1d.p.).
 
-
-What was the average age of people who are not going trick or treating?
+# What was the average age of people who are not going trick or treating?
 
 ```{r}
 
@@ -57,24 +63,28 @@ candy %>%
   filter(going_out == "No") %>%
   group_by(id) %>%
   summarise(avg_age = mean(age)) %>% 
-  summarise(avg_age_pop = mean(avg_age, na.rm = T))
+  summarise(avg_age_pop = round(mean(avg_age, na.rm = T), 1))
 
 ```
+The average age of the survey respondent who is not going out trick or treating
+is 39 (to 1d.p.). Note the decimal place has been dropped since value has been
+rounded to a whole number.
 
-
-For each of joy, despair and meh, which candy bar received the most of these
-ratings?
+# For each of joy, despair and meh, which candy bar received the most of these ratings?
 
 ```{r}
 
 candy %>%
   group_by(rating, candy_name) %>% 
-  summarise(count = n()) %>% 
-  slice_max(count)
+  summarise(num_ratings = n()) %>% 
+  slice_max(num_ratings) 
 
 ```
+Reese's Peanut Butter Cups received the highest number of JOY ratings (7,353),
+Box o' raisins received the highest number of DESPAIR ratings (6,567) and
+Lollipops received the highest number of MEH ratings (1,557)
 
-How many people rated Starburst as despair?
+# How many people rated Starburst as despair?
 
 ```{r}
 
@@ -83,17 +93,13 @@ candy %>%
          rating == "DESPAIR") %>% 
   summarise(count = n())
   
-  
 ```
+A total of 1,986 survey respondents rated Starbursts as "DESPAIR".
 
-
-For the next three questions, count despair as -1, joy as +1, and meh as 0.
-
-What was the most popular candy bar by this rating system for each gender in the
-dataset ?
+---For the next three questions, count despair as -1, joy as +1, and meh as 0.--
 
 ```{r}
-
+# add column to dataset with scores for each rating
 candy_scored <- candy %>% 
   mutate(score = case_when(
     rating == "JOY" ~ 1,
@@ -102,6 +108,8 @@ candy_scored <- candy %>%
   ))
 
 ```
+
+# What was the most popular candy bar by this rating system for each gender in the dataset?
 
 ```{r}
 
@@ -112,9 +120,13 @@ candy_scored %>%
   slice_max(total_score)
 
 ```
+All responses to gender were retained in the dataset as the question did not 
+specify if genders other than Male/Female were to be removed.
 
+Both males and females rated Reese's Peanut Butter Cups the highest. Kit Kat and
+Twix were rated highest for people responding "I'd rather not say" or "Other".
 
-What was the most popular candy bar in each year?
+# What was the most popular candy bar in each year?
 
 ```{r}
 
@@ -124,43 +136,10 @@ candy_scored %>%
   slice_max(total_score)
 
 ```
+The most popular candy in 2015 and 2017 was Reese's Peanut Butter Cups, in 2016
+the most popular candy was Kit Kat.
 
-
-What was the most popular candy bar by this rating for people in US, Canada, UK,
-and all other countries?
-
-```{r}
-
-candy_scored %>%
-  filter(country == c("USA", "Canada", "UK", "Other")) %>% 
-  group_by(country, candy_name) %>% 
-  summarise(total_score = sum(score)) %>% 
-  slice_max(total_score)
-
-```
-
-```{r}
-
-candy_scored %>% 
-  filter(country == "Other", id == "90278940") %>% 
-  summarise(total_score = sum(score)) %>% 
-  arrange(desc(total_score))
-
-```
-
-```{r}
-
-candy_scored %>%
-  filter(country == "USA") %>% 
-  group_by(candy_name) %>% 
-  summarise(JOY = sum(str_detect(rating, "JOY")),
-            MEH = sum(str_detect(rating, "MEH")),
-            DESPAIR = sum(str_detect(rating, "DESPAIR")),
-            total_score = JOY - DESPAIR
-  ) %>% 
-  arrange(desc(total_score))
-
-```
+# What was the most popular candy bar by this rating for people in US, Canada, UK, and all other countries?
 
 ```{r}
 
@@ -176,17 +155,5 @@ candy_scored %>%
   select(country, candy_name)
 
 ```
-
-```{r}
-
-candy_scored %>%
-  filter(country == "Canada") %>% 
-  group_by(country, candy_name) %>% 
-  # max total_score is the best, however if there is a tie then the candy with
-  # the lowest number of votes wins (i.e. highest proportion of "JOY" votes)
-  summarise(total_score = sum(score),
-            num_votes = n()) %>%
-  arrange(desc(total_score), num_votes)
-
-```
-
+The most popular candy in USA was Reese's Peanut Butter Cups, in the UK it was 
+Rolos. Kit Kat was the most popular candy in both Canada and Other countries.

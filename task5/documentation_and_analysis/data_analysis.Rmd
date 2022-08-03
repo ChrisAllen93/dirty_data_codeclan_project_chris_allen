@@ -1,0 +1,135 @@
+---
+title: "Task 5 - Data analysis"
+output: html_notebook
+---
+
+```{r}
+
+library(tidyverse)
+library(here)
+
+```
+
+# Read in cleaned data set
+ 
+```{r}
+
+rwa <- read_csv(here("clean_data/clean_data.csv"))
+
+rwa
+
+```
+
+--------------------------------------------------------------------------------
+
+Analysis questions:
+
+# What’s the average RWA score for each gender?
+
+```{r}
+rwa %>% 
+  filter(!is.na(gender)) %>% 
+  group_by(gender) %>% 
+  summarise(avg_rwa_score = round(mean(rwa_score), 2)) %>% 
+  arrange(desc(avg_rwa_score))
+
+```
+Average RWA scores for males, females and other are 3.12, 2.47 and 1.89,
+respectively.
+
+# What’s the average RWA score for left handed people vs. right handed people?
+
+```{r}
+
+rwa %>% 
+  filter(hand == "Right" | hand == "Left") %>% 
+  group_by(hand) %>% 
+  summarise(avg_rwa_score = round(mean(rwa_score), 3))
+
+```
+The average RWS score for left- and right-handed people are extremely similar, 
+2.856 for left-handed people and 2.587 for right-handed people. Three decimal 
+places are presented to show how similar the values are.
+
+
+# What’s the average family size for each type of childhood?
+
+[Assumption] "Type" of childhood has been interpreted as which type of area did
+the person live in when they were a child, which relates to the column labelled
+"Urban".
+
+```{r}
+
+rwa %>% 
+  filter(!is.na(urban)) %>% 
+  group_by(urban) %>% 
+  summarise(avg_family_size = round(mean(familysize), 2)) %>% 
+  arrange(desc(avg_family_size))
+
+```
+The data shows that family size tended to be larger in rural areas (2.79), 
+followed by suburban areas (2.62) and lastly urban areas (2.5).
+
+
+# What’s the average time to take the test for each education level?
+
+[Assumption] "testelapse" values taken to be in units of seconds.
+
+```{r}
+
+rwa %>% 
+  filter(!is.na(education_level)) %>% 
+  group_by(education_level) %>% 
+  summarise(avg_test_time = round(mean(testelapse), 0)) %>% 
+  arrange(avg_test_time)
+
+```
+The results show that people with graduate degrees had the overall fastest time
+to complete the test, on average. This was followed by people who dropped out of
+high school, then high school graduates and lastly those with a university
+degree.
+
+
+# Create a plot of results of question 4.
+
+```{r}
+
+rwa %>% 
+  filter(!is.na(education_level)) %>% 
+  group_by(education, education_level) %>% 
+  summarise(avg_test_time = round(mean(testelapse), 0)) %>% 
+  ggplot(aes(x = education_level, y = avg_test_time)) + 
+  geom_bar(stat = "identity") +
+  labs(y= "Average Test Time (s)", x = "Education")
+
+```
+[don't quite know how to put the education levels in ascending order]
+
+# What’s the average RWA score for people aged:
+Under 18
+18 to 25
+26 to 40
+41 to 60
+Over 60
+
+```{r}
+
+rwa %>% 
+  # categorise each numerical age value to an age range
+  mutate(age_range = case_when(
+    age < 18 ~ "Under 18",
+    age <= 25 ~ "18 - 25",
+    age <= 40 ~ "26 - 40",
+    age <= 60 ~ "40 - 60",
+    age > 60 ~ "Over 60"
+  )) %>% 
+  # calcualte the average RWA score for each age range
+  group_by(age_range) %>% 
+  summarise(avg_rwa_score = round(mean(rwa_score), 2)) %>% 
+  arrange(desc(avg_rwa_score))
+
+```
+The output shows that the average RWA score decreases with age. Under 18s have
+the highest score with 3.36 followed by the 18 - 25, 26 - 40, 40 - 60 and over
+60s category with average RWA scores of 3.15, 2.61, 2.54 and 2.40, respectively.
+

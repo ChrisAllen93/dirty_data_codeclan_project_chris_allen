@@ -24,9 +24,9 @@ candy_2017 <- read_xlsx("raw_data/boing-boing-candy-2017.xlsx") %>%
 
 # Clean 2015 data ---------------------------------------------------------
 
-candy_2015_clean <- candy_2015 %>% 
+candy_2015_clean <- candy_2015 %>%
   # renaming non-standard column headings
-  rename(age = how_old_are_you, 
+  rename(age = how_old_are_you,
          going_out =
            are_you_going_actually_going_trick_or_treating_yourself) %>%
   # creating standard column headings
@@ -61,16 +61,16 @@ candy_2016_clean <- candy_2016 %>%
 
 # Clean 2017 data ---------------------------------------------------------
 
-candy_2017_clean <- candy_2017 %>% 
+candy_2017_clean <- candy_2017 %>%
   # renaming non-standard column headings
   rename(id = internal_id) %>%
-  rename_with(.fn = ~ gsub("q[0-9]+_","",.x)) %>% 
+  rename_with(.fn = ~ gsub("q[0-9]+_","",.x)) %>%
   # creating standard column headings
   mutate(year = as.integer(2017),
-         age = as.integer(age)) %>% 
+         age = as.integer(age)) %>%
   # reorder columns and pivot candy names and ratings
   select(id, year, going_out, age, gender, country, where(is.character)) %>%
-  pivot_longer(-(id:country), names_to = "candy_name", values_to = "rating") %>% 
+  pivot_longer(-(id:country), names_to = "candy_name", values_to = "rating") %>%
   clean_candy_names() %>%
   clean_country_names()
 

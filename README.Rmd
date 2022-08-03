@@ -1,0 +1,38 @@
+---
+title: "README"
+output: github_document
+---
+
+This repo contains 6 'dirty data' tasks used to practice cleaning datasets and
+performing analysis. These tasks showcase the skills developed in weeks 1 to 4
+of the Professional Data Analyst course at CodeClan.
+
+An overview of the tasks and skills applied are as follows:
+
+Task 1 - Decathlon Data
+Renaming columns, string formatting and simple statistical analyses.
+
+Task 2 - Cake Ingredients
+Joining datasets using inner_join(), mutating and manipulating columns to
+perform analyses.
+
+Task 3 - Sea bird observation data
+Joining datasets, string manipulation using regex, performing statistical
+analysis using dplyr.
+
+Task 4 - Halloween Candy Data
+Cleaning of data from 3 years of the infamous Boing Boing Halloween Candy survey
+datasets. Included string manipulation using regex, creating name cleaning 
+functions, standardising dataset formats across multiple datasets and joining
+these datasets.
+
+Task 5 - Right Wing Authoritarianism
+Recoding numerical data to meaningful character values, 
+Using pivot_longer(), pivot_wider() and separate() functions to wrangle data, 
+calculating and adding scores to dataset and using ggplot to create chart as
+part of the data analysis.
+
+Task 6 - Dog owners survey
+Extracting strings/numbers from character data using regex, separating multiple
+datapoints within a single field, removal of duplicate rows and using ggplot to
+create chart as part of the data analysis.
