@@ -14,6 +14,8 @@ library(here)
 
 bird <- read_csv(here("clean_data/clean_data.csv"))
 
+bird
+
 ```
 
 For each question where we ask for bird names, give the bird’s common name, 

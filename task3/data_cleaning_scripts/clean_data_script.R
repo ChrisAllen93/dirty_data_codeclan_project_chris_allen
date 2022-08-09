@@ -31,7 +31,7 @@ ship_data %>%
   filter(!is.na(count)) %>% 
   # remove age category and plummage codes from bird names
   mutate(abbreviation = str_remove_all(abbreviation, " [A-Z0-9]+"),
-         common_name = str_remove_all(common_name, " [A-Z]{2}[0-9]| [A-Z]+|"),
+         common_name = str_remove_all(common_name, " [A-Z]{2}[0-9]| [A-Z]{2,}"),
          common_name = str_remove_all(common_name, " sensu lato"),
          scientific_name = str_remove_all(scientific_name, 
                                           " [A-Z]{2}[0-9]| [A-Z]+|")
